@@ -7,9 +7,9 @@ const Contact = require("../models/contactModel");
 const getContact = asyncHandler(async (req, res) => {
     const contacts = await Contact.find({ user_id: req.user.id });
     res.status(200).json(contacts)
-})
+});
 
-//@desc Get all contract
+//@desc Get a contract
 //@route GET /api/contacts
 //@access private
 const getContactById = asyncHandler(async (req, res) => {
@@ -25,12 +25,13 @@ const getContactById = asyncHandler(async (req, res) => {
 //@route POST /api/contacts
 //@access private
 const createContact = asyncHandler(async (req, res) => {
-    const { name, email, phone } = req.body;
-    if (!name || !email || !phone) {
+    const { user_id, name, email, phone } = req.body;
+    if (!user_id || !name || !email || !phone) {
         res.status(400)
         throw new Error("All fields are required");
     }
     const contact = await Contact.create({
+        user_id: user_id,
         name: name,
         email: email,
         phone: phone
@@ -47,6 +48,13 @@ const updateContact = asyncHandler(async (req, res) => {
         res.status(404);
         throw new Error("Contact not found");
     }
+
+    // check for user id of contact belongs to user
+    if (contact.user_id.toString() !== req.user.id) {
+        res.status(403);
+        throw new Error("User don't have permission to update other user contacts");
+    }
+
     const updatedContact = await Contact.findByIdAndUpdate(
         req.params.id,
         req.body,
@@ -65,9 +73,21 @@ const deleteContact = asyncHandler(async (req, res) => {
         res.status(404);
         throw new Error("Contact not found");
     }
+    // check for user id of contact belongs to user
+    if (contact.user_id.toString() !== req.user.id) {
+        res.status(403);
+        throw new Error("User don't have permission to update other user contacts");
+    }
+
     await Contact.deleteOne({ _id: req.params.id });
     res.status(200).json({ message: `Delete contact for ${req.params.id}` });
 })
 
 
-module.exports = { getContact, getContactById, createContact, updateContact, deleteContact };
+module.exports = {
+    getContact,
+    getContactById,
+    createContact,
+    updateContact,
+    deleteContact
+};
