@@ -10,12 +10,15 @@ const app = express();
 
 const port = process.env.PORT;
 
-// provides a middleware to parse json data
+// middleware to parse json data
 app.use(express.json());
-// error handling middleware
-app.use(errorHandler);
+
+
+// routes
 app.use("/api/contacts", require("./routes/contactRoutes"));
 
+// error handling middleware
+app.use(errorHandler);
 
 
 
